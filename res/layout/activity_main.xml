@@ -1,0 +1,78 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:tools="http://schemas.android.com/tools"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                tools:context=".MainActivity">
+
+    <SurfaceView
+            android:id="@+id/surface_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+
+
+    <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+        <TextView
+                android:layout_width="0dp"
+                android:layout_height="1px"
+                android:layout_weight="1"
+                android:background="#0000ff"/>
+
+        <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
+                      android:orientation="vertical">
+            <Button android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/plus"
+                    android:text="+"></Button>
+            <Button
+                    android:id="@+id/take_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="take"/>
+            <Button android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/minus"
+                    android:text="-"></Button>
+        </LinearLayout>
+
+
+    </LinearLayout>
+
+    <Button android:layout_alignParentBottom="true" android:layout_centerHorizontal="true"
+            android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/show_info"
+            android:text="info"></Button>
+
+    <TextView android:textColor="@android:color/white" android:background="#a02222ff" android:padding="10dp"
+              android:id="@+id/info_panel" android:layout_width="wrap_content" android:layout_height="wrap_content"
+              android:layout_above="@+id/show_info" android:layout_centerHorizontal="true" android:visibility="gone"/>
+
+    <Button
+            android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/show_more_info"
+            android:text="more info" android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true"/>
+
+    <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="picture sizes:"
+            android:id="@+id/picture_label" android:layout_centerHorizontal="true"/>
+
+    <Spinner
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/picture_spinner" android:layout_centerHorizontal="true"
+            android:layout_below="@id/picture_label"/>
+    <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="preview sizes:"
+            android:id="@+id/preview_label" android:layout_below="@+id/picture_spinner"
+            android:layout_centerHorizontal="true"/>
+
+    <Spinner
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/preview_spinner" android:layout_below="@+id/preview_label"
+            android:layout_centerHorizontal="true"/>
+</RelativeLayout>
