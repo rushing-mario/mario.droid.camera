@@ -1,4 +1,4 @@
-package com.example.mycamera;
+package com.example.mycamera.utils;
 
 import android.content.Context;
 import android.os.Environment;

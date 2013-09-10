@@ -5,7 +5,6 @@ import android.hardware.Camera;
 import android.hardware.Camera.*;
 import android.location.Location;
 import android.location.LocationListener;
-import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -13,12 +12,16 @@ import android.view.*;
 import android.view.View.OnClickListener;
 import android.view.View.OnLongClickListener;
 import android.widget.*;
+import com.example.mycamera.utils.FileUtils;
+import com.example.mycamera.utils.StringUtils;
+import com.example.mycamera.utils.Utils;
+import com.example.mycamera.view.CameraPreview;
+import com.example.mycamera.view.ClipView;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends Activity implements SurfaceHolder.Callback {
+public class MainActivity extends Activity {
 
     // 预览状态
     private static int STATE_PREVIEW_STOP = 0;
@@ -59,12 +62,16 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
     private TextView mInfoPanel;
     private Spinner mPictureSpinner;
     private Spinner mPreviewSpinner;
+    private Spinner mPreviewModeSpinner;
+    private CameraPreview mPreview;
+    private ClipView mClipView;
+    private CheckBox mClipShowCheck;
     private int mFrontCameraId = -1;
     private int mBackCameraId = -1;
     private int mCurrentCameraId = -1;// 当前相机id
+    private int mLastOpenedCameraId = -1;
     private Camera mCameraDevice;
-    private SurfaceView mSurface;
-    private SurfaceHolder mHolder;
+//    private SurfaceView mSurface;
     private int mCameraState = STATE_PREVIEW_STOP;
     private OnClickListener mZoomClick = new OnClickListener() {
         @Override
@@ -118,18 +125,14 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
         super.onCreate(savedInstanceState);
         fullScreen();
         getCamera();
-        if (mBackCameraId != -1) {
-            openCamera(mBackCameraId);
-        } else if (mFrontCameraId != -1) {
-            openCamera(mFrontCameraId);
-        } else {
-            throw new RuntimeException("no camera found!");
-        }
-        initCamera();
+        openCamera();
+        initCameraPara();
         setContentView(R.layout.activity_main);
-        mSurface = (SurfaceView) findViewById(R.id.surface_view);
-        mSurface.getHolder().addCallback(this);
-        mSurface.getHolder().setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);//在3.0以下必须使用这句
+        //set preview
+        ViewGroup previewContainer = (ViewGroup) findViewById(R.id.preview_container);
+        mPreview = new CameraPreview(this, mCameraDevice);
+        previewContainer.addView(mPreview);
+        //
         mTakeButton = (Button) findViewById(R.id.take_button);
         mTakeButton.setOnClickListener(new OnClickListener() {
 
@@ -179,6 +182,20 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
 
         mInfoPanel = (TextView) findViewById(R.id.info_panel);
 
+        mClipView = (ClipView) findViewById(R.id.clip_view);
+        mClipView.setReferenceView(mPreview);
+        mClipShowCheck = (CheckBox) findViewById(R.id.clip_check);
+        mClipShowCheck.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                if(b){
+                    mClipView.setVisibility(View.VISIBLE);
+                }else{
+                    mClipView.setVisibility(View.GONE);
+                }
+            }
+        });
+
         // set spinner
         mPictureSpinner = (Spinner) findViewById(R.id.picture_spinner);
         List<Size> supportedPictureSizes = mCameraDevice.getParameters().getSupportedPictureSizes();
@@ -205,6 +222,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
                 Size selectedSize = para.getSupportedPictureSizes().get(i);
                 para.setPictureSize(selectedSize.width, selectedSize.height);
                 mCameraDevice.setParameters(para);
+                mClipView.setClipRate((float)selectedSize.width / selectedSize.height);
             }
 
             @Override
@@ -240,6 +258,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
                 mCameraDevice.stopPreview();
                 mCameraDevice.setParameters(para);
                 mCameraDevice.startPreview();
+                mPreview.requestLayout();
             }
 
             @Override
@@ -247,6 +266,31 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
 
             }
         });
+
+        mPreviewModeSpinner = (Spinner) findViewById(R.id.preview_mode_spinner);
+        List<CharSequence> previewModeList = new ArrayList<CharSequence>();
+        previewModeList.add("MEASURE_STATE_FIT_XY");
+        previewModeList.add("MEASURE_STATE_ORIGINAL_SIZE");
+        previewModeList.add("MEASURE_STATE_SCALE_SHORT");
+        previewModeList.add("MEASURE_STATE_SCALE_LONG");
+
+        ArrayAdapter<CharSequence> previewModeAdapter = new ArrayAdapter<CharSequence>(this, android.R.layout.simple_spinner_item, previewModeList);
+        previewModeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        mPreviewModeSpinner.setAdapter(previewModeAdapter);
+        mPreviewModeSpinner.setSelection(mPreview.getMeasureMode());
+        mPreviewModeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                mPreview.setMeasureMode(i);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
+        });
+
+
         // set Location
 //        LocationManager locManager = (LocationManager) getSystemService(LOCATION_SERVICE);
 //        locManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, mLocListener);
@@ -256,10 +300,10 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
     @Override
     protected void onResume() {
         super.onResume();
-        if (mCameraState == STATE_PREVIEW_STOP && mCurrentCameraId != -1) {
-            openCamera(mCurrentCameraId);
-            initCamera();
-            startPreview(mHolder);
+        if (mCameraDevice == null) {
+            openCamera();
+            mPreview.setCameraDevice(mCameraDevice);
+            initCameraPara();
         }
     }
 
@@ -291,14 +335,24 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
         }
     }
 
-    private void openCamera(int cameraId) {
-        if (mCurrentCameraId != cameraId) {
+    private void openCamera() {
+        if (mCurrentCameraId == -1) {
+            int cameraId = -1;
+            if(mLastOpenedCameraId != -1){
+                cameraId = mLastOpenedCameraId;
+            }else if(mBackCameraId != -1){
+                cameraId = mBackCameraId;
+            }else if(mFrontCameraId != -1){
+                cameraId = mFrontCameraId;
+            }else {
+                throw new RuntimeException("no camera found!");
+            }
             mCameraDevice = Camera.open(cameraId);
             mCurrentCameraId = cameraId;
         }
     }
 
-    private void initCamera() {
+    private void initCameraPara() {
         Parameters para = mCameraDevice.getParameters();
         //设置合适的预览大小
         int width = getResources().getDisplayMetrics().widthPixels;
@@ -316,20 +370,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
         mCameraDevice.setParameters(para);
     }
 
-    private void startPreview(SurfaceHolder holder) {
-        if (mCameraDevice == null || holder == null) return;
-        if (mCameraState == STATE_PREVIEW_STOP) {
-            try {
-                mCameraDevice.setPreviewDisplay(holder);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            Log.d("test", "start preview");
-            mCameraDevice.startPreview();
-            mCameraState = STATE_IDEL;
-        }
-    }
-
     private void stopPreview() {
         if (mCameraDevice != null && mCameraState != STATE_PREVIEW_STOP) {
             mCameraDevice.cancelAutoFocus();
@@ -342,28 +382,9 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
         if (mCameraDevice != null) {
             mCameraDevice.release();
             mCameraDevice = null;
-            mCurrentCameraId = -1;
             mCameraState = STATE_PREVIEW_STOP;
+            mCurrentCameraId = -1;
         }
-    }
-
-    @Override
-    public void surfaceChanged(SurfaceHolder holder, int arg1, int arg2,
-                               int arg3) {
-        mHolder = holder;
-        if (mCameraDevice == null && mCurrentCameraId != -1) {
-            openCamera(mCurrentCameraId);
-        }
-        startPreview(holder);
-    }
-
-    @Override
-    public void surfaceCreated(SurfaceHolder holder) {
-    }
-
-    @Override
-    public void surfaceDestroyed(SurfaceHolder holder) {
-        mHolder = null;
     }
 
     private void showHideCurrentInfo(){
@@ -378,7 +399,9 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
                 Size pictureSize = para.getPictureSize();
                 sb.append("pictureSize:" + StringUtils.oToString(pictureSize));
                 sb.append("\n\n");
-                sb.append("surfaceView:" + StringUtils.oToString(mSurface));
+                sb.append("surfaceView:" + StringUtils.oToString(mPreview));
+                sb.append("\n\n");
+                sb.append("container:" + StringUtils.oToString(mPreview.getParent()));
                 sb.append("\n\n");
                 mInfoPanel.setText(sb.toString());
             }

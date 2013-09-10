@@ -1,4 +1,4 @@
-package com.example.mycamera;
+package com.example.mycamera.utils;
 
 import android.app.Activity;
 import android.content.Context;
@@ -9,6 +9,7 @@ import android.os.Environment;
 import android.util.Log;
 import android.view.Display;
 import android.view.Surface;
+import com.example.mycamera.utils.StringUtils;
 
 import java.util.List;
 
