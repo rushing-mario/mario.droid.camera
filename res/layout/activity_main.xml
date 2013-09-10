@@ -4,11 +4,16 @@
                 android:layout_height="match_parent"
                 tools:context=".MainActivity">
 
-    <SurfaceView
-            android:id="@+id/surface_view"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"/>
+    <RelativeLayout android:keepScreenOn="true" android:gravity="center" android:layout_width="match_parent" android:layout_height="match_parent"
+                    android:id="@+id/preview_container">
+    </RelativeLayout>
 
+    <TextView
+            android:layout_width="1px"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_centerInParent="true"
+            android:background="#0000ff"/>
 
     <LinearLayout
             android:layout_width="match_parent"
@@ -75,4 +80,27 @@
             android:layout_height="wrap_content"
             android:id="@+id/preview_spinner" android:layout_below="@+id/preview_label"
             android:layout_centerHorizontal="true"/>
+
+    <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="preview mode:"
+            android:id="@+id/preview_mode_label" android:layout_below="@+id/preview_spinner"
+            android:layout_centerHorizontal="true"/>
+
+    <Spinner
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/preview_mode_spinner" android:layout_below="@+id/preview_mode_label"
+            android:layout_centerHorizontal="true"/>
+
+    <com.example.mycamera.view.ClipView android:layout_centerInParent="true" android:visibility="gone" android:id="@+id/clip_view" android:layout_width="match_parent"
+                                        android:layout_height="match_parent" ></com.example.mycamera.view.ClipView>
+
+    <CheckBox
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Clip"
+            android:id="@+id/clip_check" android:layout_alignParentBottom="true"
+            android:layout_alignParentLeft="true"/>
 </RelativeLayout>
