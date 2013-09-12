@@ -8,8 +8,6 @@ import android.view.ViewGroup;
 
 import java.io.IOException;
 
-import static android.hardware.Camera.*;
-
 /**
  * Created by marui on 13-9-9.
  */
@@ -20,19 +18,27 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
     public static final int MEASURE_STATE_SCALE_SHORT = 2;
     public static final int MEASURE_STATE_SCALE_LONG = 3;
     private Camera mCameraDevice;
-
-    public int getMeasureMode() {
-        return mMeasureMode;
-    }
-
+    private SurfaceHolder mHolder;
     private int mMeasureMode = MEASURE_STATE_ORIGINAL_SIZE;
-
 
     public CameraPreview(Context context, Camera camera) {
         super(context);
         mCameraDevice = camera;
         getHolder().setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);//在3.0以下必须使用这句
         getHolder().addCallback(this);
+    }
+
+    public int getMeasureMode() {
+        return mMeasureMode;
+    }
+
+    public void setMeasureMode(int mode) {
+        if (mode >= MEASURE_STATE_FIT_XY && mode <= MEASURE_STATE_SCALE_LONG) {
+            mMeasureMode = mode;
+        } else {
+            mMeasureMode = MEASURE_STATE_FIT_XY;
+        }
+        requestLayout();
     }
 
     @Override
@@ -42,18 +48,19 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
-        startPreview(holder);
+        mHolder = holder;
+        startPreview();
     }
 
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
     }
 
-    private void startPreview(SurfaceHolder holder) {
-        if (mCameraDevice == null || holder == null) return;
+    public void startPreview() {
+        if (mCameraDevice == null || mHolder == null) return;
 //        if (mCameraState == STATE_PREVIEW_STOP) {
         try {
-            mCameraDevice.setPreviewDisplay(holder);
+            mCameraDevice.setPreviewDisplay(mHolder);
             mCameraDevice.startPreview();
 //                mCameraState = STATE_IDEL;
         } catch (IOException e) {
@@ -76,12 +83,12 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
                 ViewGroup parent = (ViewGroup) getParent();
                 int viewWidth = parent.getMeasuredWidth();
                 int viewHeight = parent.getMeasuredHeight();
-                boolean reverse = false;
+                boolean portrait = false;
                 if (viewHeight > viewWidth) {
                     int temp = viewWidth;
                     viewWidth = viewHeight;
                     viewHeight = temp;
-                    reverse = true;
+                    portrait = true;
                 }
                 float viewRate = (float) viewWidth / viewHeight;
                 int scaleWidth;
@@ -93,7 +100,7 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
                     scaleHeight = viewHeight;
                     scaleWidth = (int) (viewHeight * previewRate);
                 }
-                if (reverse) {
+                if (portrait) {
                     setMeasuredDimension(MeasureSpec.makeMeasureSpec(scaleHeight, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(scaleWidth, MeasureSpec.EXACTLY));
                 } else {
                     setMeasuredDimension(MeasureSpec.makeMeasureSpec(scaleWidth, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(scaleHeight, MeasureSpec.EXACTLY));
@@ -104,12 +111,12 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
                 ViewGroup parent = (ViewGroup) getParent();
                 int viewWidth = parent.getMeasuredWidth();
                 int viewHeight = parent.getMeasuredHeight();
-                boolean reverse = false;
+                boolean portrait = false;
                 if (viewHeight > viewWidth) {
                     int temp = viewWidth;
                     viewWidth = viewHeight;
                     viewHeight = temp;
-                    reverse = true;
+                    portrait = true;
                 }
                 float viewRate = (float) viewWidth / viewHeight;
                 int scaleWidth;
@@ -121,7 +128,7 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
                     scaleHeight = viewHeight;
                     scaleWidth = (int) (viewHeight * previewRate);
                 }
-                if (reverse) {
+                if (portrait) {
                     setMeasuredDimension(MeasureSpec.makeMeasureSpec(scaleHeight, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(scaleWidth, MeasureSpec.EXACTLY));
                 } else {
                     setMeasuredDimension(MeasureSpec.makeMeasureSpec(scaleWidth, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(scaleHeight, MeasureSpec.EXACTLY));
@@ -132,15 +139,6 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
         } else {
             super.onMeasure(widthMeasureSpec, heightMeasureSpec);
         }
-    }
-
-    public void setMeasureMode(int mode) {
-        if (mode >= MEASURE_STATE_FIT_XY && mode <= MEASURE_STATE_SCALE_LONG) {
-            mMeasureMode = mode;
-        } else {
-            mMeasureMode = MEASURE_STATE_FIT_XY;
-        }
-        requestLayout();
     }
 
     public void setCameraDevice(Camera camera) {

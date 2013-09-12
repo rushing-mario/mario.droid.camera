@@ -59,6 +59,8 @@ public class MainActivity extends Activity {
     private Button mMinusButton;
     private Button mInfoButton;
     private Button mMoreInfoButton;
+    private Button mMatchPictureButton;
+    private Button mSwitchButton;
     private TextView mInfoPanel;
     private Spinner mPictureSpinner;
     private Spinner mPreviewSpinner;
@@ -196,100 +198,31 @@ public class MainActivity extends Activity {
             }
         });
 
-        // set spinner
         mPictureSpinner = (Spinner) findViewById(R.id.picture_spinner);
-        List<Size> supportedPictureSizes = mCameraDevice.getParameters().getSupportedPictureSizes();
-        List<CharSequence> supportedPictureSizesStr = new ArrayList<CharSequence>();
-        Size currentPictureSize = mCameraDevice.getParameters().getPictureSize();
-        int currentPictureIndex = 0;
-        for(int i = 0; i < supportedPictureSizes.size();i++){
-            Size size = supportedPictureSizes.get(i);
-            String str = StringUtils.oToString(size);
-            if(str.equals(StringUtils.oToString(currentPictureSize))){
-                currentPictureIndex = i;
-            }
-            supportedPictureSizesStr.add(str);
-        }
-
-        ArrayAdapter<CharSequence> pictureAdapter = new ArrayAdapter<CharSequence>(this, android.R.layout.simple_spinner_item, supportedPictureSizesStr);
-        pictureAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        mPictureSpinner.setAdapter(pictureAdapter);
-        mPictureSpinner.setSelection(currentPictureIndex);
-        mPictureSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                Parameters para = mCameraDevice.getParameters();
-                Size selectedSize = para.getSupportedPictureSizes().get(i);
-                para.setPictureSize(selectedSize.width, selectedSize.height);
-                mCameraDevice.setParameters(para);
-                mClipView.setClipRate((float)selectedSize.width / selectedSize.height);
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> adapterView) {
-
-            }
-        });
-
         mPreviewSpinner = (Spinner) findViewById(R.id.preview_spinner);
-        List<Size> supportedPreviewSizes = mCameraDevice.getParameters().getSupportedPreviewSizes();
-        List<CharSequence> supportedPreviewSizesStr = new ArrayList<CharSequence>();
-        Size currentPreviewSize = mCameraDevice.getParameters().getPreviewSize();
-        int currentPreviewIndex = 0;
-        for(int i = 0; i < supportedPreviewSizes.size();i++){
-            Size size = supportedPreviewSizes.get(i);
-            String str = StringUtils.oToString(size);
-            if(str.equals(StringUtils.oToString(currentPreviewSize))){
-                currentPreviewIndex = i;
-            }
-            supportedPreviewSizesStr.add(str);
-        }
-
-        ArrayAdapter<CharSequence> previewAdapter = new ArrayAdapter<CharSequence>(this, android.R.layout.simple_spinner_item, supportedPreviewSizesStr);
-        previewAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        mPreviewSpinner.setAdapter(previewAdapter);
-        mPreviewSpinner.setSelection(currentPreviewIndex);
-        mPreviewSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                Parameters para = mCameraDevice.getParameters();
-                Size selectedSize = para.getSupportedPreviewSizes().get(i);
-                para.setPreviewSize(selectedSize.width, selectedSize.height);
-                mCameraDevice.stopPreview();
-                mCameraDevice.setParameters(para);
-                mCameraDevice.startPreview();
-                mPreview.requestLayout();
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> adapterView) {
-
-            }
-        });
-
         mPreviewModeSpinner = (Spinner) findViewById(R.id.preview_mode_spinner);
-        List<CharSequence> previewModeList = new ArrayList<CharSequence>();
-        previewModeList.add("MEASURE_STATE_FIT_XY");
-        previewModeList.add("MEASURE_STATE_ORIGINAL_SIZE");
-        previewModeList.add("MEASURE_STATE_SCALE_SHORT");
-        previewModeList.add("MEASURE_STATE_SCALE_LONG");
+        initSpinner();
 
-        ArrayAdapter<CharSequence> previewModeAdapter = new ArrayAdapter<CharSequence>(this, android.R.layout.simple_spinner_item, previewModeList);
-        previewModeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        mPreviewModeSpinner.setAdapter(previewModeAdapter);
-        mPreviewModeSpinner.setSelection(mPreview.getMeasureMode());
-        mPreviewModeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        mMatchPictureButton = (Button) findViewById(R.id.match_button);
+        mMatchPictureButton.setOnClickListener(new OnClickListener() {
             @Override
-            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                mPreview.setMeasureMode(i);
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> adapterView) {
-
+            public void onClick(View view) {
+                int sizeIndex = Utils.getPictureMatchingIndex(mCameraDevice);
+                if(sizeIndex != -1){
+                    mPreviewSpinner.setSelection(sizeIndex);
+                }else{
+                    Toast.makeText(MainActivity.this, "no supportPreviewSize find!", Toast.LENGTH_SHORT).show();
+                }
             }
         });
 
+        mSwitchButton = (Button) findViewById(R.id.switch_camera);
+        mSwitchButton.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                switchCamera();
+            }
+        });
 
         // set Location
 //        LocationManager locManager = (LocationManager) getSystemService(LOCATION_SERVICE);
@@ -337,7 +270,7 @@ public class MainActivity extends Activity {
 
     private void openCamera() {
         if (mCurrentCameraId == -1) {
-            int cameraId = -1;
+            int cameraId;
             if(mLastOpenedCameraId != -1){
                 cameraId = mLastOpenedCameraId;
             }else if(mBackCameraId != -1){
@@ -350,6 +283,11 @@ public class MainActivity extends Activity {
             mCameraDevice = Camera.open(cameraId);
             mCurrentCameraId = cameraId;
         }
+    }
+
+    private void openCamera(int cameraId){
+        mCameraDevice = Camera.open(cameraId);
+        mCurrentCameraId = cameraId;
     }
 
     private void initCameraPara() {
@@ -387,6 +325,115 @@ public class MainActivity extends Activity {
         }
     }
 
+    private void initSpinner(){
+        // set spinner
+        List<Size> supportedPictureSizes = mCameraDevice.getParameters().getSupportedPictureSizes();
+        List<CharSequence> supportedPictureSizesStr = new ArrayList<CharSequence>();
+        Size currentPictureSize = mCameraDevice.getParameters().getPictureSize();
+        int currentPictureIndex = 0;
+        for(int i = 0; i < supportedPictureSizes.size();i++){
+            Size size = supportedPictureSizes.get(i);
+            String str = StringUtils.oToString(size);
+            if(str.equals(StringUtils.oToString(currentPictureSize))){
+                currentPictureIndex = i;
+            }
+            supportedPictureSizesStr.add(str);
+        }
+
+        ArrayAdapter<CharSequence> pictureAdapter = new ArrayAdapter<CharSequence>(this, android.R.layout.simple_spinner_item, supportedPictureSizesStr);
+        pictureAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        mPictureSpinner.setAdapter(pictureAdapter);
+        mPictureSpinner.setSelection(currentPictureIndex);
+        mPictureSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                Parameters para = mCameraDevice.getParameters();
+                Size selectedSize = para.getSupportedPictureSizes().get(i);
+                para.setPictureSize(selectedSize.width, selectedSize.height);
+                mCameraDevice.setParameters(para);
+                mClipView.setClipRate((float)selectedSize.width / selectedSize.height);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
+        });
+
+        List<Size> supportedPreviewSizes = mCameraDevice.getParameters().getSupportedPreviewSizes();
+        List<CharSequence> supportedPreviewSizesStr = new ArrayList<CharSequence>();
+        Size currentPreviewSize = mCameraDevice.getParameters().getPreviewSize();
+        int currentPreviewIndex = 0;
+        for(int i = 0; i < supportedPreviewSizes.size();i++){
+            Size size = supportedPreviewSizes.get(i);
+            String str = StringUtils.oToString(size);
+            if(str.equals(StringUtils.oToString(currentPreviewSize))){
+                currentPreviewIndex = i;
+            }
+            supportedPreviewSizesStr.add(str);
+        }
+
+        ArrayAdapter<CharSequence> previewAdapter = new ArrayAdapter<CharSequence>(this, android.R.layout.simple_spinner_item, supportedPreviewSizesStr);
+        previewAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        mPreviewSpinner.setAdapter(previewAdapter);
+        mPreviewSpinner.setSelection(currentPreviewIndex);
+        mPreviewSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                Parameters para = mCameraDevice.getParameters();
+                Size selectedSize = para.getSupportedPreviewSizes().get(i);
+                para.setPreviewSize(selectedSize.width, selectedSize.height);
+                mCameraDevice.stopPreview();
+                mCameraDevice.setParameters(para);
+                mCameraDevice.startPreview();
+                mPreview.requestLayout();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
+        });
+
+        List<CharSequence> previewModeList = new ArrayList<CharSequence>();
+        previewModeList.add("MEASURE_STATE_FIT_XY");
+        previewModeList.add("MEASURE_STATE_ORIGINAL_SIZE");
+        previewModeList.add("MEASURE_STATE_SCALE_SHORT");
+        previewModeList.add("MEASURE_STATE_SCALE_LONG");
+
+        ArrayAdapter<CharSequence> previewModeAdapter = new ArrayAdapter<CharSequence>(this, android.R.layout.simple_spinner_item, previewModeList);
+        previewModeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        mPreviewModeSpinner.setAdapter(previewModeAdapter);
+        mPreviewModeSpinner.setSelection(mPreview.getMeasureMode());
+        mPreviewModeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                mPreview.setMeasureMode(i);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
+        });
+    }
+
+    private void switchCamera(){
+        if(mBackCameraId != -1 && mFrontCameraId != -1){
+            int cameraToOpen = mCurrentCameraId == mBackCameraId ? mFrontCameraId : mBackCameraId;
+            stopPreview();
+            closeCamera();
+            openCamera(cameraToOpen);
+            mPreview.setCameraDevice(mCameraDevice);
+            initCameraPara();
+            initSpinner();
+            mPreview.startPreview();
+        }else{
+            Toast.makeText(this, "just have one camera!", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+
     private void showHideCurrentInfo(){
         if(mInfoPanel.getVisibility() == View.GONE){
             if(mCameraDevice != null){
@@ -402,6 +449,10 @@ public class MainActivity extends Activity {
                 sb.append("surfaceView:" + StringUtils.oToString(mPreview));
                 sb.append("\n\n");
                 sb.append("container:" + StringUtils.oToString(mPreview.getParent()));
+                sb.append("\n\n");
+                sb.append("max:" + StringUtils.oToString(Utils.getMaxNormalPreviewSize(mCameraDevice)));
+                sb.append("\n\n");
+                sb.append("isPreviewMatchingAllPictureSize:" + Utils.isPreviewMatchingAllPictureSize(mCameraDevice));
                 sb.append("\n\n");
                 mInfoPanel.setText(sb.toString());
             }

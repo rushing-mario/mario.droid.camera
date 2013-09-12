@@ -4,16 +4,18 @@
                 android:layout_height="match_parent"
                 tools:context=".MainActivity">
 
-    <RelativeLayout android:keepScreenOn="true" android:gravity="center" android:layout_width="match_parent" android:layout_height="match_parent"
+    <RelativeLayout android:background="#000000" android:keepScreenOn="true" android:gravity="center"
+                    android:layout_width="match_parent" android:layout_height="match_parent"
                     android:id="@+id/preview_container">
+
     </RelativeLayout>
 
     <TextView
-            android:layout_width="1px"
+            android:layout_width="2px"
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:layout_centerInParent="true"
-            android:background="#0000ff"/>
+            android:background="#ff0000"/>
 
     <LinearLayout
             android:layout_width="match_parent"
@@ -24,38 +26,33 @@
 
         <TextView
                 android:layout_width="0dp"
-                android:layout_height="1px"
+                android:layout_height="2px"
                 android:layout_weight="1"
-                android:background="#0000ff"/>
+                android:background="#ff0000"/>
 
         <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
                       android:orientation="vertical">
-            <Button android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/plus"
+            <Button android:textColor="#0022ff" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:id="@+id/plus"
                     android:text="+"></Button>
             <Button
+                    android:textColor="#0022ff"
                     android:id="@+id/take_button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="take"/>
-            <Button android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/minus"
+            <Button android:textColor="#0022ff" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:id="@+id/minus"
                     android:text="-"></Button>
         </LinearLayout>
 
 
     </LinearLayout>
 
-    <Button android:layout_alignParentBottom="true" android:layout_centerHorizontal="true"
-            android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/show_info"
-            android:text="info"></Button>
-
     <TextView android:textColor="@android:color/white" android:background="#a02222ff" android:padding="10dp"
               android:id="@+id/info_panel" android:layout_width="wrap_content" android:layout_height="wrap_content"
-              android:layout_above="@+id/show_info" android:layout_centerHorizontal="true" android:visibility="gone"/>
+              android:layout_centerInParent="true" android:layout_centerHorizontal="true" android:visibility="gone"/>
 
-    <Button
-            android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/show_more_info"
-            android:text="more info" android:layout_alignParentBottom="true"
-            android:layout_alignParentRight="true"/>
 
     <TextView
             android:layout_width="wrap_content"
@@ -94,13 +91,51 @@
             android:id="@+id/preview_mode_spinner" android:layout_below="@+id/preview_mode_label"
             android:layout_centerHorizontal="true"/>
 
-    <com.example.mycamera.view.ClipView android:layout_centerInParent="true" android:visibility="gone" android:id="@+id/clip_view" android:layout_width="match_parent"
-                                        android:layout_height="match_parent" ></com.example.mycamera.view.ClipView>
+    <com.example.mycamera.view.ClipView android:layout_centerInParent="true" android:visibility="gone"
+                                        android:id="@+id/clip_view" android:layout_width="match_parent"
+                                        android:layout_height="match_parent"></com.example.mycamera.view.ClipView>
 
-    <CheckBox
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Clip"
-            android:id="@+id/clip_check" android:layout_alignParentBottom="true"
-            android:layout_alignParentLeft="true"/>
+
+    <LinearLayout android:layout_alignParentBottom="true"
+                  android:layout_alignParentRight="true" android:layout_width="wrap_content"
+                  android:layout_height="wrap_content" android:orientation="vertical">
+
+
+        <Button android:textColor="#0022ff" android:layout_alignParentBottom="true"
+                android:layout_centerHorizontal="true"
+                android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/show_info"
+                android:text="info"></Button>
+        <Button android:textColor="#0022ff" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:id="@+id/show_more_info"
+                android:text="more info"/>
+
+
+    </LinearLayout>
+
+    <LinearLayout android:layout_alignParentBottom="true"
+                  android:layout_alignParentLeft="true" android:layout_width="wrap_content"
+                  android:layout_height="wrap_content" android:orientation="vertical">
+        <CheckBox
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Clip"
+                android:textColor="#0022ff"
+                android:id="@+id/clip_check"/>
+
+        <Button
+                android:textColor="#0022ff"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="match picture"
+                android:id="@+id/match_button"/>
+
+        <Button
+                android:textColor="#0022ff"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="switch camera"
+                android:id="@+id/switch_camera"/>
+    </LinearLayout>
+
+
 </RelativeLayout>

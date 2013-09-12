@@ -15,6 +15,13 @@ import java.util.List;
 
 public class Utils {
 
+    public static final float tolerateRate = 0.01f;
+
+    /**
+     * 获取系统信息
+     * @param context
+     * @return
+     */
     public static String getSystemInfo(Context context) {
         StringBuffer sb = new StringBuffer();
         sb.append("------------------System Info------------------\n");
@@ -46,6 +53,11 @@ public class Utils {
         return sb.toString();
     }
 
+    /**
+     * 获取支持的相机参数信息
+     * @param para
+     * @return
+     */
     public static String getSupportParametersInfo(Camera.Parameters para) {
 
         List<String> supportedAntibanding = para.getSupportedAntibanding();
@@ -241,6 +253,105 @@ public class Utils {
         camera.setDisplayOrientation(result);
     }
 
-    public void getPara(Camera.Parameters para) {
+    /**
+     * 获取相机最大的4：3预览尺寸
+     * @return 找到返回Size,找不到返回null
+     */
+    public static Size getMaxNormalPreviewSize(Camera camera){
+        if(camera == null)return null;
+        List<Size> supportSize = camera.getParameters().getSupportedPreviewSizes();
+        int index = -1;
+        for(int i = 0; i < supportSize.size(); i++){
+            Size size = supportSize.get(i);
+            if((size.width - size.height) / (float)size.width == 0.25f){
+                if(index == -1){
+                    index = i;
+                }else if(supportSize.get(index).width < size.width){
+                    index = i;
+                }
+            }
+        }
+        if(index != -1){
+            return supportSize.get(index);
+        }else{
+            return null;
+        }
     }
+
+    /**
+     * 获得和当前PictureSize最符合PreviewSize
+     * @return 找到返回Size,找不到返回null
+     */
+    public static Size getPictureMatchingSize(Camera camera){
+        if(camera == null)return null;
+        final float tolerateRate = 0.01f;
+        Size pictureSize = camera.getParameters().getPictureSize();
+        float pictureRate = (float)pictureSize.width / pictureSize.height;
+        List<Size> supportSize = camera.getParameters().getSupportedPreviewSizes();
+        int index = -1;
+        for(int i = 0; i < supportSize.size(); i++){
+            Size size = supportSize.get(i);
+            float rate = (float)size.width / size.height;
+            if(Math.abs(pictureRate - rate) <= tolerateRate){
+                if(index == -1){
+                    index = i;
+                }else if(supportSize.get(index).width < size.width){
+                    index = i;
+                }
+            }
+        }
+        if(index != -1){
+            return supportSize.get(index);
+        }else{
+            return null;
+        }
+    }
+
+    /**
+     * 获得和当前PictureSize最符合PreviewSize
+     * @return 找到返回Size index,找不到返回-1
+     */
+    public static int getPictureMatchingIndex(Camera camera){
+        if(camera == null)return -1;
+        Size pictureSize = camera.getParameters().getPictureSize();
+        float pictureRate = (float)pictureSize.width / pictureSize.height;
+        List<Size> supportSize = camera.getParameters().getSupportedPreviewSizes();
+        int index = -1;
+        for(int i = 0; i < supportSize.size(); i++){
+            Size size = supportSize.get(i);
+            float rate = (float)size.width / size.height;
+            if(Math.abs(pictureRate - rate) <= tolerateRate){
+                if(index == -1){
+                    index = i;
+                }else if(supportSize.get(index).width < size.width){
+                    index = i;
+                }
+            }
+        }
+        return index;
+    }
+
+    /**
+     * 判断相机是否包含和所有相片尺寸等比的预览尺寸
+     * @param camera
+     * @return
+     */
+    public static boolean isPreviewMatchingAllPictureSize(Camera camera){
+        List<Size> pictureSizes = camera.getParameters().getSupportedPictureSizes();
+        List<Size> supportSize = camera.getParameters().getSupportedPreviewSizes();
+        for(Size size : pictureSizes){
+            float pictureRate = (float)size.width / size.height;
+            boolean hasMatch = false;
+            for(int i = 0; i < supportSize.size(); i++){
+                float rate = (float)size.width / size.height;
+                if(Math.abs(pictureRate - rate) <= tolerateRate){
+                    hasMatch = true;
+                    break;
+                }
+            }
+            if(!hasMatch)return false;
+        }
+        return true;
+    }
+
 }
